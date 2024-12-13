@@ -1,0 +1,27 @@
+.table-column-center {
+    text-align: center;
+}
+/* public/css/custom.css */
+.table-custom {
+    background-color: #ffffff; /* Light mode background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+}
+
+.table-custom-header {
+    background-color: #f3f4f6; /* Light gray for header */
+    color: #111827; /* Dark text */
+}
+
+.table-custom-body {
+    border: 1px solid #e5e7eb; /* Light gray border */
+}
+
+.table-custom-body tr:hover {
+    background-color: #f9fafb; /* Light hover effect */
+}
+/* In your custom CSS file */
+.table-shadow {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
