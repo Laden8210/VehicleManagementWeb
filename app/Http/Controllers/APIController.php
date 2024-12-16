@@ -29,8 +29,10 @@ class APIController extends Controller
 
     public function getTicket()
     {
+
+        $guest = Auth::guard('api')->user();
         return response()->json(
-            TripTicket::with('vehicle')
+            TripTicket::where('user_id', $guest->id)->with(['vehicle','user'])
                 ->get()
                 ->map(function ($ticket) {
                     return [
@@ -80,7 +82,9 @@ class APIController extends Controller
                         'PurchasedCost' => $ticket->vehicle->PurchasedCost,
                         'PropertyNumber' => $ticket->vehicle->PropertyNumber,
                         'created_at' => $ticket->vehicle->created_at,
-                        'updated_at' => $ticket->vehicle->updated_at
+                        'updated_at' => $ticket->vehicle->updated_at,
+                        'name' => $ticket->user->name,
+
 
                     ];
                 })
@@ -106,18 +110,11 @@ class APIController extends Controller
             'TimeDeparture_B' => 'required',
             'TimeArrival_B' => 'required',
             'AddedDuringTrip' => 'nullable',
-            'TotalFuelTank' => 'required|numeric',
-            'FuelConsumption' => 'required|numeric',
-            'BalanceEnd' => 'required|numeric',
             'Others' => 'nullable',
             'Remarks' => 'nullable',
         ]);
 
-
-
         $guest = Auth::guard('api')->user();
-
-
 
         $tripTicket =  new TripTicket();
         $tripTicket->user_id = $guest->id;
@@ -138,9 +135,7 @@ class APIController extends Controller
         $tripTicket->TimeArrival_B = Carbon::createFromFormat('h:i A', $request->TimeArrival_B)->format('H:i:s');
 
         $tripTicket->AddedDuringTrip = $request->AddedDuringTrip;
-        $tripTicket->TotalFuelTank = $request->TotalFuelTank;
-        $tripTicket->FuelConsumption = $request->FuelConsumption;
-        $tripTicket->BalanceEnd = $request->BalanceEnd;
+
         $tripTicket->Others = $request->Others;
         $tripTicket->Remarks = $request->Remarks;
         $tripTicket->save();
@@ -230,8 +225,9 @@ class APIController extends Controller
     }
     public function getRepairRequest()
     {
+        $guest = Auth::guard('api')->user();
         return response()->json(
-            RepairRequest::with('vehicle')
+            RepairRequest::where('user_id', $guest->id)->with('vehicle')
                 ->get()
                 ->map(function ($ticket) {
                     return [
@@ -285,7 +281,7 @@ class APIController extends Controller
         $guest = Auth::guard('api')->user();
 
 
-        $maintenance = MaintenanceRecommendation::with('vehicle')
+        $maintenance = MaintenanceRecommendation::where('user_id', $guest->id)->with('vehicle')
             ->get();
 
             $formattedMaintenance = $maintenance->map(function ($item) {
@@ -339,7 +335,7 @@ class APIController extends Controller
 
     public function addMaintenanceRecommendations(Request $request)
     {
-        // Validate the incoming request
+
         $validatedData = $request->validate([
             'driverID' => 'required|integer',
             'dueDate' => 'required|date',
@@ -376,17 +372,38 @@ class APIController extends Controller
 
     public function getData()
     {
-        // Get the counts for each model
-        $reminderCount = Reminder::count();
-        $repairRequestCount = RepairRequest::count();
-        $mainCount = MaintenanceRecommendation::count();
-        $dispatchCount = Dispatch::count();
-        return response()->json([
-            'reminderCount' => $reminderCount,
-            'repairRequestCount' => $repairRequestCount,
-            'mainCount' => $mainCount,
-            'dispatchCount' => $dispatchCount,
-        ]);
+        try {
+            // Retrieve the authenticated user
+            $guest = Auth::guard('api')->user();
+
+            // Check if the user is authenticated
+            if (!$guest) {
+                return response()->json([
+                    'error' => 'Unauthorized access. User not authenticated.',
+                ], 401);
+            }
+
+            $reminderCount = Reminder::where('user_id', $guest->id)->count();
+            $repairRequestCount = RepairRequest::where('user_id', $guest->id)->count();
+            $mainCount = MaintenanceRecommendation::where('user_id', $guest->id)->count();
+            $dispatchCount = Dispatch::count();
+
+            // Return the data in JSON format
+            return response()->json([
+                'reminderCount' => $reminderCount,
+                'repairRequestCount' => $repairRequestCount,
+                'mainCount' => $mainCount,
+                'dispatchCount' => $dispatchCount,
+                'name' => $guest->name,
+            ], 200);
+        } catch (\Exception $e) {
+            // Handle unexpected errors
+            return response()->json([
+                'error' => 'An error occurred while fetching data.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
     }
+
 
 }
