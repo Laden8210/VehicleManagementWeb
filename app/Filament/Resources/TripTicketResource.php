@@ -141,11 +141,14 @@ class TripTicketResource extends Resource
                                                 ->numeric()
                                                 ->reactive()
                                                 ->afterStateUpdated(function (callable $set, callable $get) {
-                                                    $issuedFromOffice = $get('IssuedFromOffice') ?? 0;
-                                                    $addedDuringTrip = $get('AddedDuringTrip') ?? 0;
-                                                    $balanceStart = $get('BalanceStart') ?? 0;
-                                                    $set('TotalFuelTank', $balanceStart + $issuedFromOffice + $addedDuringTrip);
+                                                    $balanceStart = floatval($get('BalanceStart')) ?? 0;
+                                                    $issuedFromOffice = floatval($get('IssuedFromOffice')) ?? 0;
+                                                    $addedDuringTrip = floatval($get('AddedDuringTrip')) ?? 0;
+                                                    $totalFuelTank = round($balanceStart + $issuedFromOffice + $addedDuringTrip, 2);
+
+                                                    $set('TotalFuelTank', $totalFuelTank);
                                                 }),
+
 
                                             TextInput::make('IssuedFromOffice')
                                                 ->label('Issued From Office')
@@ -319,7 +322,7 @@ class TripTicketResource extends Resource
                                                 ->placeholder('If necessary'),
                                         ]),
                                 ])->columns(2), //first section schema
-                        ]), //first tab schema  
+                        ]), //first tab schema
                 ])->columnSpanFull(),
             ]); //Base Schema
     }

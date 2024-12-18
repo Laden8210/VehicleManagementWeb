@@ -48,12 +48,12 @@ class TripTicket extends Model
                 Log::info('Generated TripTicketNumber: ' . $tripTicket->TripTicketNumber);
             }
         });
-
         static::saving(function ($trip) {
-            $trip->DistanceTravelled = (int)$trip->KmAfterTravel - (int) $trip->KmBeforeTravel;
-            $trip->TotalFuelTank = (int) $trip->BalanceStart + (int)$trip->IssuedFromOffice +  (int)$trip->AddedDuringTrip;
-            $trip->FuelConsumption = $trip->DistanceTravelled / 10;
-            $trip->BalanceEnd = (int) $trip->TotalFuelTank - (int) $trip->FuelConsumption;
+            $trip->DistanceTravelled = floatval($trip->KmAfterTravel) - floatval($trip->KmBeforeTravel);
+            $trip->TotalFuelTank = round(floatval($trip->BalanceStart) + floatval($trip->IssuedFromOffice) + floatval($trip->AddedDuringTrip), 2);
+            $trip->FuelConsumption = round($trip->DistanceTravelled / 10, 2);
+            $trip->BalanceEnd = round($trip->TotalFuelTank - $trip->FuelConsumption, 2);
+
             Log::info('Trip Ticket Saving:', [
                 'DistanceTravelled' => $trip->DistanceTravelled,
                 'TotalFuelTank' => $trip->TotalFuelTank,
@@ -61,12 +61,14 @@ class TripTicket extends Model
                 'BalanceEnd' => $trip->BalanceEnd,
             ]);
         });
+
     }
 
     public function getTotalFuelTankAttribute()
     {
-        return (int) $this->BalanceStart +(int) $this->IssuedFromOffice + (int)$this->AddedDuringTrip;
+        return round(floatval($this->BalanceStart) + floatval($this->IssuedFromOffice) + floatval($this->AddedDuringTrip), 2);
     }
+
 
     // Accessor for DistanceTravelled
     public function getDistanceTravelledAttribute()

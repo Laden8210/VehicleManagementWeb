@@ -404,6 +404,32 @@ class APIController extends Controller
             ], 500);
         }
     }
+    public function getLatestTicketByCar(Request $request)
+    {
+        $request->validate([
+            "vehicles_id" => 'required'
+        ]);
+
+        $tripTicket = TripTicket::where('vehicles_id', $request->vehicles_id)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$tripTicket) {
+            return response()->json([
+                "error" => "No trip ticket found for the given vehicle ID."
+            ], 404);
+        }
+
+        $kbt = $tripTicket->KmAfterTravel;
+        $totalFuelTank = $tripTicket->BalanceStart + $tripTicket->AddedDuringTrip + $tripTicket->IssuedFromOffice ;
+
+        return response()->json([
+            "kbt" => $kbt,
+            "totalFuelTank" => $totalFuelTank
+        ]);
+    }
+
+
 
 
 }
