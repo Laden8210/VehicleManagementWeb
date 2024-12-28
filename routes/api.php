@@ -118,8 +118,12 @@ Route::group(['middleware' => ['auth:sanctum']], function()
     Route::post('add-maintenance-recommendation', [APIController::class, 'addMaintenanceRecommendations']);
     Route::get('dashboard', [APIController::class, 'getData']);
     Route::get('getLatestTicketByCar', [APIController::class, 'getLatestTicketByCar']);
-});
 
+    Route::get('get_user', [APIController::class, 'getUser']);
+
+
+});
+Route::get('getPersonnel', [APIController::class, 'getPersonnel']);
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

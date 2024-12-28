@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
 use App\Models\RepairRequest;
 use App\Models\Reminder;
 use App\Models\User;
+use App\Models\Personnel;
 
 
 class APIController extends Controller
@@ -63,6 +64,8 @@ class APIController extends Controller
                         'updated_at' => $ticket->updated_at,
                         'responder_personnels_ids' => $ticket->responder_personnels_ids,
                         'responders' => $ticket->responders,
+                        'responder_name' => $ticket->getResponderNamesAttribute(),
+
                         'user_id' => $ticket->user_id,
 
                         'VehicleName' => $ticket->vehicle->VehicleName,
@@ -112,6 +115,7 @@ class APIController extends Controller
             'AddedDuringTrip' => 'nullable',
             'Others' => 'nullable',
             'Remarks' => 'nullable',
+            'responder_id' => 'required',
         ]);
 
         $guest = Auth::guard('api')->user();
@@ -138,6 +142,9 @@ class APIController extends Controller
 
         $tripTicket->Others = $request->Others;
         $tripTicket->Remarks = $request->Remarks;
+        $tripTicket->responders = [
+            ['responder_id' => (string) $request->responder_id]
+        ];
         $tripTicket->save();
 
         return response()->json(['message' => 'Trip ticket added successfully'], 201);
@@ -335,9 +342,9 @@ class APIController extends Controller
 
     public function addMaintenanceRecommendations(Request $request)
     {
+        $guest = Auth::guard('api')->user();
 
         $validatedData = $request->validate([
-            'driverID' => 'required|integer',
             'dueDate' => 'required|date',
             'issueDescription' => 'required|string|max:255',
             'issues' => 'required|string|max:255',
@@ -349,7 +356,7 @@ class APIController extends Controller
 
         try {
             $recommendation = new MaintenanceRecommendation();
-            $recommendation->user_id = $validatedData['driverID'];
+            $recommendation->user_id = $guest->id;
             $recommendation->PriorityLevel =$validatedData['priorityLevel'];
             $recommendation->DueDate = Carbon::parse($validatedData['dueDate'])->format('Y-m-d H:i:s');
 
@@ -358,8 +365,7 @@ class APIController extends Controller
             $recommendation->RecommendationDate = Carbon::parse($validatedData['recommendationDate'])->format('Y-m-d H:i:s');
             $recommendation->vehicles_id = $validatedData['vehicleName'];
             $recommendation->RequestStatus = "Pending";
-            $recommendation->Issues = '[{"IssueDescription": "' . $validatedData['issueDescription'] . '"}]';
-
+            $recommendation->Issues = [["IssueDescription" => $validatedData['issueDescription']]];
 
 
             $recommendation->save();
@@ -430,6 +436,14 @@ class APIController extends Controller
     }
 
 
+    public function getPersonnel(){
+        return response()->json(Personnel::all());
+    }
 
+    public function getUser(){
+
+        $guest = Auth::guard('api')->user();
+        return response()->json(User::where('id', $guest->id)->first());
+    }
 
 }
